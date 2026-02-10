@@ -47,6 +47,18 @@ docker compose up --build
 
 ---
 
+## Environment Variables
+
+| Variable           | Description                                                                 | Example/Default Value                                      |
+|--------------------|-----------------------------------------------------------------------------|------------------------------------------------------------|
+| DATABASE_URL       | Postgres connection string                                                  | postgresql+psycopg2://gp_import:gp_import_pw@db:5432/google_photos_import |
+| REDIS_URL          | Redis connection string                                                     | redis://redis:6379/0                                       |
+| APP_SECRET_KEY     | Secret key for Fernet encryption of Immich credentials and API keys         | changeme (change this in production!)                      |
+| ENABLE_PLAYWRIGHT  | Enable Playwright fallback for Google Photos extraction (0=off, 1=on)       | 0                                                          |
+| LOG_LEVEL          | Log level for backend and worker                                            | info                                                       |
+
+---
+
 ## Local Development (No Docker)
 
 1. Install Python 3.11+, Node.js (if using Vite/React frontend), Postgres, and Redis.
@@ -96,11 +108,6 @@ docker compose up --build
 ## Data Volumes
 - `./data:/data` is used for staging downloads and logs
 - `db_data` for Postgres
-
----
-
-## Environment Variables
-See `.env.example` for all options.
 
 ---
 
