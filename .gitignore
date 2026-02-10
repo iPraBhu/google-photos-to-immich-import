@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+
+# Environment
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+# Alembic
+app/db/migrations/versions/
+
+# Data and logs
+data/
+*.log
+
+# Node/Vite/Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Docker
+*.pid
+
+# Test
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db

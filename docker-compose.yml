@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: google_photos_import
+      POSTGRES_USER: gp_import
+      POSTGRES_PASSWORD: gp_import_pw
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://gp_import:gp_import_pw@db:5432/google_photos_import
+      - REDIS_URL=redis://redis:6379/0
+      - APP_SECRET_KEY=changeme
+      - ENABLE_PLAYWRIGHT=0
+      - LOG_LEVEL=info
+    volumes:
+      - ./app:/app
+      - ./data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    command: ["rq", "worker", "-u", "redis://redis:6379/0", "import-queue"]
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://gp_import:gp_import_pw@db:5432/google_photos_import
+      - REDIS_URL=redis://redis:6379/0
+      - APP_SECRET_KEY=changeme
+      - ENABLE_PLAYWRIGHT=0
+      - LOG_LEVEL=info
+    volumes:
+      - ./app:/app
+      - ./data:/data
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  db_data:
+  data:
