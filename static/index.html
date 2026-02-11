@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Photos to Immich Import</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Google Photos to Immich Import</h1>
+        
+        <div class="section">
+            <h2>Test Immich Connection</h2>
+            <form id="test-login-form">
+                <input type="url" id="immich-url" placeholder="Immich URL" required>
+                <select id="auth-mode">
+                    <option value="API_KEY">API Key</option>
+                    <option value="CREDENTIALS">Email/Password</option>
+                </select>
+                <input type="password" id="api-key" placeholder="API Key">
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+                <button type="submit">Test Connection</button>
+            </form>
+            <div id="test-result"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Create Import Job</h2>
+            <form id="create-job-form">
+                <input type="url" id="job-immich-url" placeholder="Immich URL" required>
+                <select id="job-auth-mode">
+                    <option value="API_KEY">API Key</option>
+                    <option value="CREDENTIALS">Email/Password</option>
+                </select>
+                <input type="password" id="job-api-key" placeholder="API Key">
+                <input type="email" id="job-email" placeholder="Email">
+                <input type="password" id="job-password" placeholder="Password">
+                <textarea id="album-links" placeholder="Album Links (one per line)" required></textarea>
+                <label><input type="checkbox" id="create-album"> Create Album</label>
+                <label><input type="checkbox" id="skip-duplicates"> Skip Duplicates</label>
+                <label><input type="checkbox" id="store-staging"> Store Staging Files</label>
+                <input type="number" id="download-concurrency" placeholder="Download Concurrency" value="3">
+                <input type="number" id="upload-concurrency" placeholder="Upload Concurrency" value="3">
+                <button type="submit">Create Job</button>
+            </form>
+        </div>
+        
+        <div class="section">
+            <h2>Jobs</h2>
+            <div class="queue-controls">
+                <button id="refresh-jobs">Refresh</button>
+                <button id="pause-queued" class="secondary">Pause All Queued</button>
+                <button id="remove-queued" class="delete">Remove All Queued</button>
+            </div>
+            <div id="jobs-list"></div>
+        </div>
+    </div>
+    <script src="/static/main.js"></script>
+</body>
+</html>

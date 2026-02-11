@@ -11,6 +11,7 @@ class JobStatus(str, enum.Enum):
     DONE = "DONE"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+    PAUSED = "PAUSED"
 
 class AuthMode(str, enum.Enum):
     API_KEY = "API_KEY"
@@ -27,6 +28,7 @@ class Job(Base):
     encrypted_email = Column(String, nullable=True)
     encrypted_password = Column(String, nullable=True)
     encrypted_access_token = Column(String, nullable=True)
+    album_links = Column(JSON, nullable=False)
     options = Column(JSON, nullable=False)
     progress = Column(JSON, nullable=True)
     last_error = Column(Text, nullable=True)

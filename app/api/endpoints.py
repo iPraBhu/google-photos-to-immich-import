@@ -9,6 +9,7 @@ from app.utils.crypto import encrypt_secret
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from app.worker.worker import queue
+from app.worker.worker import import_job
 import uuid
 
 jobs_router = APIRouter()
@@ -90,6 +91,7 @@ async def create_job(req: CreateJobRequest, db: Session = Depends(get_db)):
             encrypted_api_key=encrypted_api_key,
             encrypted_email=encrypted_email,
             encrypted_password=encrypted_password,
+            album_links=req.album_links,
             options=options,
             status=JobStatus.QUEUED
         )
@@ -98,7 +100,13 @@ async def create_job(req: CreateJobRequest, db: Session = Depends(get_db)):
         db.refresh(job)
         
         # Enqueue the job for processing
-        queue.enqueue('app.worker.worker.import_job', str(job.id))
+        try:
+            queue.enqueue(import_job, str(job.id))
+        except Exception as e:
+            job.status = JobStatus.FAILED
+            job.last_error = f"Failed to enqueue job: {str(e)}"
+            db.commit()
+            raise HTTPException(status_code=500, detail=f"Job created but failed to enqueue: {str(e)}")
         
         return {
             "id": str(job.id),
@@ -111,18 +119,76 @@ async def create_job(req: CreateJobRequest, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@jobs_router.get("/{job_id}")
-def get_job(job_id: str, db: Session = Depends(get_db)):
+@jobs_router.put("/{job_id}/cancel")
+def cancel_job(job_id: str, db: Session = Depends(get_db)):
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return {
-        "id": str(job.id),
-        "status": job.status.value,
-        "created_at": job.created_at.isoformat(),
-        "progress": job.progress,
-        "last_error": job.last_error
-    }
+    
+    if job.status in [JobStatus.DONE, JobStatus.FAILED, JobStatus.CANCELLED]:
+        raise HTTPException(status_code=400, detail="Job is already finished")
+    
+    job.cancel_requested = True
+    if job.status == JobStatus.QUEUED:
+        job.status = JobStatus.CANCELLED
+    db.commit()
+    return {"message": "Job cancellation requested"}
+
+@jobs_router.put("/{job_id}/resume")
+def resume_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.status != JobStatus.PAUSED:
+        raise HTTPException(status_code=400, detail="Job is not paused")
+    
+    job.status = JobStatus.QUEUED
+    # Re-enqueue the job
+    try:
+        from app.worker.worker import import_job
+        queue.enqueue(import_job, job_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to re-enqueue job: {str(e)}")
+    
+    db.commit()
+    return {"message": "Job resumed"}
+
+@jobs_router.delete("/{job_id}")
+def delete_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.status == JobStatus.RUNNING:
+        raise HTTPException(status_code=400, detail="Cannot delete a running job. Cancel it first.")
+    
+    # Delete associated albums and items
+    db.query(Item).filter(Item.job_id == job.id).delete()
+    db.query(Album).filter(Album.job_id == job.id).delete()
+    db.delete(job)
+    db.commit()
+    return {"message": "Job deleted"}
+
+@jobs_router.post("/pause-queued")
+def pause_queued_jobs(db: Session = Depends(get_db)):
+    updated = db.query(Job).filter(Job.status == JobStatus.QUEUED).update({"status": JobStatus.PAUSED})
+    db.commit()
+    return {"message": f"Paused {updated} queued jobs"}
+
+@jobs_router.delete("/remove-queued")
+def remove_queued_jobs(db: Session = Depends(get_db)):
+    # Get queued jobs
+    queued_jobs = db.query(Job).filter(Job.status == JobStatus.QUEUED).all()
+    count = 0
+    for job in queued_jobs:
+        # Delete associated albums and items
+        db.query(Item).filter(Item.job_id == job.id).delete()
+        db.query(Album).filter(Album.job_id == job.id).delete()
+        db.delete(job)
+        count += 1
+    db.commit()
+    return {"message": f"Removed {count} queued jobs"}
 
 @jobs_router.get("/")
 def list_jobs(db: Session = Depends(get_db)):
