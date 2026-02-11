@@ -21,8 +21,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
 
-# Mount /static for frontend assets
-static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+# Mount /static for frontend assets - go up 3 levels from app/api/main.py to project root
+static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/", include_in_schema=False)

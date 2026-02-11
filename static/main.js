@@ -40,12 +40,19 @@ function setupTestLogin() {
     });
     
     // Toggle auth fields
+    const toggleAuthFields = (authModeValue, apiKeyId, emailId, passwordId) => {
+        const isApiKey = authModeValue === 'API_KEY';
+        document.getElementById(apiKeyId).style.display = isApiKey ? 'block' : 'none';
+        document.getElementById(emailId).style.display = isApiKey ? 'none' : 'block';
+        document.getElementById(passwordId).style.display = isApiKey ? 'none' : 'block';
+    };
+    
     document.getElementById('auth-mode').addEventListener('change', (e) => {
-        const isApiKey = e.target.value === 'API_KEY';
-        document.getElementById('api-key').style.display = isApiKey ? 'block' : 'none';
-        document.getElementById('email').style.display = isApiKey ? 'none' : 'block';
-        document.getElementById('password').style.display = isApiKey ? 'none' : 'block';
+        toggleAuthFields(e.target.value, 'api-key', 'email', 'password');
     });
+    
+    // Set initial state
+    toggleAuthFields('API_KEY', 'api-key', 'email', 'password');
 }
 
 function setupCreateJob() {
@@ -87,12 +94,19 @@ function setupCreateJob() {
     });
     
     // Toggle auth fields for job form
-    document.getElementById('job-auth-mode').addEventListener('change', (e) => {
-        const isApiKey = e.target.value === 'API_KEY';
+    const toggleJobAuthFields = (authModeValue) => {
+        const isApiKey = authModeValue === 'API_KEY';
         document.getElementById('job-api-key').style.display = isApiKey ? 'block' : 'none';
         document.getElementById('job-email').style.display = isApiKey ? 'none' : 'block';
         document.getElementById('job-password').style.display = isApiKey ? 'none' : 'block';
+    };
+    
+    document.getElementById('job-auth-mode').addEventListener('change', (e) => {
+        toggleJobAuthFields(e.target.value);
     });
+    
+    // Set initial state
+    toggleJobAuthFields('API_KEY');
 }
 
 function setupJobsList() {

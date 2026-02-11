@@ -170,3 +170,24 @@ label {
 .secondary:hover {
     background-color: #5a6268;
 }
+
+#jobs-list {
+    margin-top: 20px;
+}
+
+/* Auth field toggle */
+input[type="password"],
+input[type="email"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.job-created {
+    font-size: 12px;
+    color: #666;
+}
+
+.job-actions button {
+    font-size: 14px;
+    padding: 6px 12px;
+}
