@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Enum, Text
 from sqlalchemy.dialects.postgresql import UUID
 from app.models.base import Base
+import enum
 
 class AlbumStatus(str, enum.Enum):
     PENDING = "PENDING"

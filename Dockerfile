@@ -12,6 +12,7 @@ RUN apt-get update && \
     ca-certificates \
     jq \
     exiftool \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -28,7 +29,15 @@ RUN if [ "$ENABLE_PLAYWRIGHT" = "1" ]; then \
 # --- Web image ---
 FROM base AS web
 COPY ./app /app
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # --- Worker image ---
 FROM base AS worker
 COPY ./app /app
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["rq", "worker", "-u", "redis://redis:6379/0", "import-queue"]

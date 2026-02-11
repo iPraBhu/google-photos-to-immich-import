@@ -1,18 +1,16 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://gp_import:gp_import_pw@db:5432/google_photos_import")
 
-engine = create_async_engine(DATABASE_URL, future=True, echo=False)
+engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 
-AsyncSessionLocal = sessionmaker(
-    bind=engine, class_=AsyncSession, expire_on_commit=False
-)
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
-def get_session():
-    session = AsyncSessionLocal()
+def get_db():
+    db = SessionLocal()
     try:
-        yield session
+        yield db
     finally:
-        session.close()
+        db.close()

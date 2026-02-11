@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-sqlalchemy[asyncio]
+sqlalchemy
 psycopg2-binary
 alembic
 httpx
@@ -17,6 +17,6 @@ tenacity
 pytest
 pytest-asyncio
 pytest-mock
-requests
 exifread
 sse-starlette
+beautifulsoup4

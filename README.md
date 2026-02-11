@@ -5,47 +5,53 @@
 
 A robust, enterprise-grade, FOSS tool to import Google Photos public shared album links into [Immich](https://github.com/immich-app/immich), recreating albums and uploading all media with full metadata preservation. Built for reliability, security, and extensibility.
 
----
 
 ## Features
-- **Import Google Photos public album links** (no Google API/OAuth required)
-- **Recreate albums and upload original media** to Immich
-- **Preserve EXIF/XMP metadata** (no transcoding)
-- **Immich API key or email/password login** (secure, encrypted at rest)
-- **Resume, dedupe, and robust error handling**
-- **Real-time progress UI** (single-page app)
-- **Enterprise security:** secrets never leave the backend, encrypted at rest
-- **Docker Compose deployment** for easy self-hosting
 
----
 
 ## Quick Start
 
-### 1. Prerequisites
-- Docker & Docker Compose
-- Immich server (v1.100+ recommended)
+### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+- At least 4GB RAM available for Docker
 
-### 2. Clone the Repository
-```sh
+### Setup (Windows)
+```cmd
+# Run the setup script (it will build and start everything automatically)
+setup.bat
+```
+
+### Setup (Linux/Mac)
+```bash
+# Run the setup script (it will build and start everything automatically)
+./setup.sh
+```
+
+### Manual Setup
+If you prefer to run commands manually:
+```bash
+# Clone the repository
 git clone https://github.com/iPraBhu/google-photos-to-immich-import.git
 cd google-photos-to-immich-import
+
+# Start all services (database migrations run automatically)
+docker compose up -d --build
 ```
 
-### 3. Configure Environment
-Copy the example environment file and edit as needed:
-```sh
-cp .env.example .env
-# Edit .env to set APP_SECRET_KEY, etc.
+### Access the Application
+- **Web UI**: http://localhost:8000
+- **Immich** (if running): http://localhost:2283
+
+### View Logs
+```bash
+docker compose logs -f
 ```
 
-### 4. Run with Docker Compose
-```sh
-docker compose up --build
+### Stop Services
+```bash
+docker compose down
 ```
-- The web UI will be available at [http://localhost:8000](http://localhost:8000)
-- Data and logs are stored in `./data/`
 
----
 
 ## Environment Variables
 
@@ -57,7 +63,40 @@ docker compose up --build
 | ENABLE_PLAYWRIGHT  | Enable Playwright fallback for Google Photos extraction (0=off, 1=on)       | 0                                                          |
 | LOG_LEVEL          | Log level for backend and worker                                            | info                                                       |
 
----
+### .env Variable Details
+
+**DATABASE_URL**
+
+This variable specifies the connection string for the Postgres database. The format is:
+
+   postgresql+psycopg2://<username>:<password>@<host>:<port>/<database>
+
+In Docker Compose, the hostname `db` refers to the Postgres container defined in `docker-compose.yml`. This is not a typical localhost address, but a Docker network alias, allowing containers to communicate. The URL uses the `psycopg2` driver for SQLAlchemy compatibility.
+
+Example:
+
+   DATABASE_URL=postgresql+psycopg2://gp_import:gp_import_pw@db:5432/google_photos_import
+
+If running locally (not in Docker), change `db` to `localhost` and ensure Postgres is running:
+
+   DATABASE_URL=postgresql+psycopg2://gp_import:gp_import_pw@localhost:5432/google_photos_import
+
+**REDIS_URL**
+
+Specifies the Redis connection string. In Docker, `redis` is the hostname for the Redis container. For local development, use `localhost`.
+
+**APP_SECRET_KEY**
+
+Used for Fernet encryption of sensitive Immich credentials and API keys. Change this to a strong, random value in production.
+
+**ENABLE_PLAYWRIGHT**
+
+Set to `1` to enable headless browser extraction for Google Photos links if HTML parsing fails. Requires Playwright dependencies.
+
+**LOG_LEVEL**
+
+Controls log verbosity. Typical values: `info`, `debug`, `warning`, `error`.
+
 
 ## Local Development (No Docker)
 
@@ -84,56 +123,29 @@ docker compose up --build
    ```
 7. (If using Vite/React) Start the frontend dev server in `frontend/`.
 
----
 
 ## Immich API Key Instructions
-- In Immich, go to your user profile > API Keys > Create API Key
-- Paste the key in the web UI (preferred if available)
 
 ## Immich Credentials Login
-- Enter your Immich email and password in the web UI
-- The system logs in and stores a session token (encrypted)
-- No secrets are returned to the browser after submission
-- If token expires, the worker will attempt to refresh/re-login
 
----
 
 ## Google Photos Public Links
-- Only public shared album links (e.g., https://photos.app.goo.gl/...) are supported
-- No official Google API is used; best-effort HTML parsing
-- If Google changes the share page, import may break (see logs)
 
----
 
 ## Data Volumes
-- `./data:/data` is used for staging downloads and logs
-- `db_data` for Postgres
 
----
 
 ## Alembic Migrations
-- Run migrations automatically on startup
-- To create new migrations: `docker compose run web alembic revision --autogenerate -m "message"`
 
----
 
 ## Tests
-- Run tests: `docker compose run web pytest`
-- Includes tests for encryption, dedupe, parser, and Immich login client
 
----
 
 ## Security
-- All Immich secrets (API key or credentials) are encrypted at rest using Fernet and a server-side `APP_SECRET_KEY`.
-- Secrets are never returned to the client after initial submission.
 
----
 
 ## Known Limitations
-- Google Photos public link parsing is best-effort and may break if Google changes their HTML
-- Playwright fallback is optional (set `ENABLE_PLAYWRIGHT=1`)
 
----
 
 ## Contributing
 Pull requests, issues, and feature suggestions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
